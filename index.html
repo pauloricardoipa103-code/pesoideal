@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Peso Ideal — Protocolo Semanal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg: #F5F8F8;
+    --ink: #142524;
+    --ink-soft: #55716D;
+    --teal: #0F6E64;
+    --teal-deep: #0A4B45;
+    --mint: #C9EDE4;
+    --card: #FFFFFF;
+    --line: #DCE8E5;
+    --coral: #E0785C;
+    --radius: 18px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+  }
+  .app{
+    width:100%;
+    max-width:460px;
+    min-height:100vh;
+    padding:20px 16px 48px;
+  }
+  header{ padding:6px 4px 20px; }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--teal);
+    font-weight:700;
+  }
+  h1{
+    font-family:'Sora',sans-serif;
+    font-size:26px;
+    font-weight:800;
+    margin:4px 0 2px;
+    letter-spacing:-0.01em;
+  }
+  .sub{ font-size:13px; color:var(--ink-soft); }
+
+  .switch{
+    display:flex;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:4px;
+    margin:18px 0;
+    gap:4px;
+  }
+  .switch button{
+    flex:1;
+    border:none;
+    background:transparent;
+    padding:10px 8px;
+    border-radius:10px;
+    font-family:'Sora',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:.15s ease;
+  }
+  .switch button.active{ background:var(--teal); color:#fff; }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px;
+    margin-bottom:16px;
+  }
+  .card h2{
+    font-family:'Sora',sans-serif;
+    font-size:14px;
+    font-weight:700;
+    margin:0 0 12px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--teal-deep);
+  }
+
+  .cycle{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .day{ display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; }
+  .dot{
+    width:30px;height:30px;
+    border-radius:50%;
+    border:2px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;
+    color:var(--ink-soft);
+    font-family:'JetBrains Mono',monospace;
+  }
+  .dot.today{border-color:var(--teal);}
+  .dot.dose-day{border-style:dashed;border-color:var(--teal);}
+  .dot.done{background:var(--teal);border-color:var(--teal);color:#fff;}
+  .day span{font-size:10px;color:var(--ink-soft);font-weight:600;}
+
+  .dose-status{
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--mint); border-radius:12px; padding:12px 14px; margin-top:4px;
+  }
+  .dose-status .label{font-size:12px;color:var(--teal-deep);font-weight:600;}
+  .dose-status .value{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--teal-deep);}
+
+  button.primary{
+    width:100%;
+    background:var(--teal);
+    color:#fff;
+    border:none;
+    padding:13px;
+    border-radius:12px;
+    font-family:'Sora',sans-serif;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    margin-top:12px;
+  }
+  button.primary:disabled{ background:#B7CBC7; cursor:default; }
+  button.ghost{
+    width:100%;
+    background:transparent;
+    color:var(--teal-deep);
+    border:1px solid var(--line);
+    padding:11px;
+    border-radius:12px;
+    font-family:'Sora',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    cursor:pointer;
+    margin-top:8px;
+  }
+
+  .stats{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:4px; }
+  .stat{ background:var(--bg); border-radius:12px; padding:10px 8px; text-align:center; }
+  .stat .num{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:17px; }
+  .stat .num.neg{color:var(--teal);}
+  .stat .num.pos{color:var(--coral);}
+  .stat .lbl{ font-size:10px; color:var(--ink-soft); margin-top:2px; text-transform:uppercase; letter-spacing:.04em; }
+
+  .row{display:flex;gap:10px;}
+  .field{flex:1;}
+  label{ font-size:11px; color:var(--ink-soft); font-weight:600; display:block; margin-bottom:5px; }
+  input{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 10px;
+    font-size:15px;
+    font-family:'JetBrains Mono',monospace;
+    color:var(--ink);
+    background:#fff;
+  }
+  input:focus{outline:2px solid var(--teal);outline-offset:1px;}
+
+  canvas{max-height:220px;}
+
+  .history{ display:flex; flex-direction:column; gap:0; }
+  .h-item{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 0; border-bottom:1px solid var(--line); font-size:13px;
+  }
+  .h-item:last-child{border-bottom:none;}
+  .h-item .d{color:var(--ink-soft);}
+  .h-item .w{font-family:'JetBrains Mono',monospace;font-weight:700;}
+  .h-item .del{ background:none;border:none;color:var(--coral); font-size:12px;cursor:pointer;padding:4px 6px; }
+  .empty{ text-align:center;color:var(--ink-soft);font-size:13px;padding:16px 0; }
+  .note{ font-size:11.5px; color:var(--ink-soft); line-height:1.5; margin-top:2px; }
+  .loading{ text-align:center;padding:60px 0;color:var(--ink-soft);font-size:13px; }
+  .badge-sync{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:11px; color:var(--teal-deep); font-weight:600;
+  }
+  .badge-sync .pulse{
+    width:7px;height:7px;border-radius:50%;background:var(--teal);
+  }
+  .config-warning{
+    background:#FDECE7; border:1px solid var(--coral); color:#7A3220;
+    border-radius:12px; padding:14px; font-size:12.5px; line-height:1.6;
+  }
+  .config-warning code{
+    background:#fff; padding:2px 5px; border-radius:4px; font-size:11px;
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="loading" id="loadingMsg">Carregando dados da planilha…</div>
+</div>
+
+<script>
+/* =========================================================
+   CONFIGURAÇÃO OBRIGATÓRIA
+   Cole aqui a URL do seu Web App do Google Apps Script
+   (a que termina em /exec, gerada ao publicar o Code.gs)
+   ========================================================= */
+const API_URL = "https://script.google.com/macros/s/AKfycbwuM4TrFuCFXcfFW01rwLZ8gprSOwaY_t03EZslH5cV0rCN434tC6uLJ4rvREHsi-q7/exec";
+
+const DOSE_ML = "2,5 ml";
+const DAY_LABELS = ["D","S","T","Q","Q","S","S"];
+const PEOPLE = { you: "Você", esposa: "Esposa" };
+
+let data = { you: { weights: [], doses: [] }, esposa: { weights: [], doses: [] } };
+let currentPerson = "you";
+let chart = null;
+let loading = false;
+
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function fmtDate(iso){ const [y,m,d] = String(iso).split("-"); return `${d}/${m}`; }
+
+function isConfigured(){
+  return API_URL && API_URL.startsWith("http");
+}
+
+async function loadData(){
+  if(!isConfigured()) return;
+  loading = true;
+  try{
+    const res = await fetch(API_URL, { method: "GET" });
+    const json = await res.json();
+    if(!json.ok) throw new Error(json.error || "Erro desconhecido");
+
+    const fresh = { you: { weights: [], doses: [] }, esposa: { weights: [], doses: [] } };
+    (json.pesos || []).forEach(row=>{
+      if(fresh[row.pessoa]){
+        fresh[row.pessoa].weights.push({ id: row.id, date: row.data, weight: Number(row.peso) });
+      }
+    });
+    (json.doses || []).forEach(row=>{
+      if(fresh[row.pessoa]){
+        fresh[row.pessoa].doses.push({ id: row.id, date: row.data });
+      }
+    });
+    data = fresh;
+  }catch(e){
+    console.error("Erro ao carregar dados", e);
+  }
+  loading = false;
+}
+
+async function apiPost(payload){
+  await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" }, // evita preflight CORS no Apps Script
+    body: JSON.stringify(payload)
+  });
+}
+
+function personData(){ return data[currentPerson]; }
+function sortedWeights(p){ return [...p.weights].sort((a,b)=> a.date.localeCompare(b.date)); }
+
+function lastSunday(){
+  const d = new Date(); const day = d.getDay();
+  d.setDate(d.getDate() - day);
+  return d.toISOString().slice(0,10);
+}
+function nextSunday(){
+  const d = new Date(); const day = d.getDay();
+  const add = day === 0 ? 0 : (7 - day);
+  d.setDate(d.getDate() + add);
+  return d.toISOString().slice(0,10);
+}
+function doseTakenThisWeek(p){
+  const ls = lastSunday();
+  return p.doses.some(d => d.date >= ls);
+}
+
+function render(){
+  const app = document.getElementById("app");
+
+  if(!isConfigured()){
+    app.innerHTML = `
+      <header>
+        <div class="eyebrow">Configuração pendente</div>
+        <h1>Peso Ideal</h1>
+      </header>
+      <div class="config-warning">
+        Antes de usar, defina a constante <code>API_URL</code> no início do arquivo <code>index.html</code>
+        com a URL do seu Web App do Google Apps Script (termina em <code>/exec</code>).
+        Veja o passo a passo no <code>README.md</code> do repositório.
+      </div>`;
+    return;
+  }
+
+  const p = personData();
+  const weights = sortedWeights(p);
+  const first = weights[0];
+  const last = weights[weights.length-1];
+  const prev = weights[weights.length-2];
+  const totalVar = (first && last) ? (last.weight - first.weight) : null;
+  const lastVar = (last && prev) ? (last.weight - prev.weight) : null;
+  const doneThisWeek = doseTakenThisWeek(p);
+  const todayDow = new Date().getDay();
+
+  let ringHtml = "";
+  for(let i=0;i<7;i++){
+    const classes = ["dot"];
+    if(i === todayDow) classes.push("today");
+    if(i === 0) classes.push("dose-day");
+    if(i === 0 && doneThisWeek) classes.push("done");
+    ringHtml += `<div class="day"><div class="${classes.join(' ')}">${i===0 && doneThisWeek ? '✓' : ''}</div><span>${DAY_LABELS[i]}</span></div>`;
+  }
+
+  app.innerHTML = `
+    <header>
+      <div class="eyebrow">Protocolo semanal · ${DOSE_ML}</div>
+      <h1>Acompanhamento de peso</h1>
+      <div class="sub">Aplicação toda semana aos domingos</div>
+      <div class="badge-sync" style="margin-top:8px;"><span class="pulse"></span> Sincronizado via Google Sheets</div>
+    </header>
+
+    <div class="switch">
+      <button data-p="you" class="${currentPerson==='you'?'active':''}">Você</button>
+      <button data-p="esposa" class="${currentPerson==='esposa'?'active':''}">Esposa</button>
+    </div>
+
+    <div class="card">
+      <h2>Ciclo da semana</h2>
+      <div class="cycle">${ringHtml}</div>
+      <div class="dose-status">
+        <div>
+          <div class="label">Dose desta semana</div>
+          <div class="value">${doneThisWeek ? 'Aplicada' : 'Pendente'}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="label">Próxima aplicação</div>
+          <div class="value">${fmtDate(nextSunday())}${nextSunday()===todayISO() ? ' (hoje)' : ''}</div>
+        </div>
+      </div>
+      <button class="primary" id="btnDose" ${doneThisWeek ? 'disabled' : ''}>
+        ${doneThisWeek ? 'Dose já registrada' : `Registrar dose de hoje (${DOSE_ML})`}
+      </button>
+    </div>
+
+    <div class="card">
+      <h2>Resumo — ${PEOPLE[currentPerson]}</h2>
+      <div class="stats">
+        <div class="stat">
+          <div class="num">${first ? first.weight.toFixed(1) : '—'}</div>
+          <div class="lbl">Peso inicial</div>
+        </div>
+        <div class="stat">
+          <div class="num">${last ? last.weight.toFixed(1) : '—'}</div>
+          <div class="lbl">Peso atual</div>
+        </div>
+        <div class="stat">
+          <div class="num ${totalVar!==null ? (totalVar<=0?'neg':'pos') : ''}">${totalVar!==null ? (totalVar>0?'+':'')+totalVar.toFixed(1) : '—'}</div>
+          <div class="lbl">Variação total</div>
+        </div>
+      </div>
+      ${lastVar!==null ? `<div class="note">Última pesagem: ${lastVar>0?'+':''}${lastVar.toFixed(1)} kg em relação à anterior.</div>` : ''}
+    </div>
+
+    <div class="card">
+      <h2>Registrar peso</h2>
+      <div class="row">
+        <div class="field">
+          <label>Data</label>
+          <input type="date" id="wDate" value="${todayISO()}">
+        </div>
+        <div class="field">
+          <label>Peso (kg)</label>
+          <input type="number" id="wWeight" step="0.1" placeholder="ex: 82.4">
+        </div>
+      </div>
+      <button class="primary" id="btnSaveWeight">Salvar pesagem</button>
+    </div>
+
+    <div class="card">
+      <h2>Evolução</h2>
+      ${weights.length >= 1 ? '<canvas id="chart"></canvas>' : '<div class="empty">Registre ao menos uma pesagem para ver o gráfico.</div>'}
+    </div>
+
+    <div class="card">
+      <h2>Histórico</h2>
+      <div class="history" id="history">
+        ${weights.length ? [...weights].reverse().map(w => `
+          <div class="h-item">
+            <span class="d">${fmtDate(w.date)}</span>
+            <span class="w">${w.weight.toFixed(1)} kg</span>
+            <button class="del" data-id="${w.id}">remover</button>
+          </div>
+        `).join('') : '<div class="empty">Nenhum registro ainda.</div>'}
+      </div>
+      <button class="ghost" id="btnRefresh">Atualizar agora</button>
+    </div>
+  `;
+
+  bindEvents();
+  if(weights.length >= 1) renderChart(weights);
+}
+
+function renderChart(weights){
+  const ctx = document.getElementById('chart');
+  if(chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels: weights.map(w=>fmtDate(w.date)),
+      datasets:[{
+        data: weights.map(w=>w.weight),
+        borderColor:'#0F6E64',
+        backgroundColor:'rgba(15,110,100,0.08)',
+        pointBackgroundColor:'#0F6E64',
+        pointRadius:4,
+        tension:0.3,
+        fill:true,
+        borderWidth:2.5
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        y:{ ticks:{ font:{ family:'JetBrains Mono', size:11 } }, grid:{ color:'#DCE8E5' } },
+        x:{ ticks:{ font:{ family:'JetBrains Mono', size:10 } }, grid:{ display:false } }
+      }
+    }
+  });
+}
+
+function bindEvents(){
+  document.querySelectorAll('.switch button').forEach(btn=>{
+    btn.onclick = ()=>{ currentPerson = btn.dataset.p; render(); };
+  });
+
+  const doseBtn = document.getElementById('btnDose');
+  if(doseBtn) doseBtn.onclick = async ()=>{
+    doseBtn.disabled = true;
+    doseBtn.textContent = "Salvando...";
+    await apiPost({ action: "addDose", id: Date.now().toString(), pessoa: currentPerson, data: todayISO() });
+    await loadData();
+    render();
+  };
+
+  const saveBtn = document.getElementById('btnSaveWeight');
+  if(saveBtn) saveBtn.onclick = async ()=>{
+    const date = document.getElementById('wDate').value;
+    const weight = parseFloat(document.getElementById('wWeight').value);
+    if(!date || isNaN(weight) || weight <= 0){
+      alert('Preencha data e peso válidos.');
+      return;
+    }
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Salvando...";
+    await apiPost({ action: "addWeight", id: Date.now().toString(), pessoa: currentPerson, data: date, peso: weight });
+    await loadData();
+    render();
+  };
+
+  document.querySelectorAll('.del').forEach(btn=>{
+    btn.onclick = async ()=>{
+      const id = btn.dataset.id;
+      btn.textContent = "removendo...";
+      await apiPost({ action: "deleteWeight", id: id });
+      await loadData();
+      render();
+    };
+  });
+
+  const refreshBtn = document.getElementById('btnRefresh');
+  if(refreshBtn) refreshBtn.onclick = async ()=>{
+    refreshBtn.textContent = "Atualizando...";
+    await loadData();
+    render();
+  };
+}
+
+(async function init(){
+  await loadData();
+  render();
+})();
+</script>
+</body>
+</html>
